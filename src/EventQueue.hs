@@ -4,7 +4,7 @@
 This module handle the external events of the game. That is: the user inputs and the time.
 -}
 module EventQueue where
-
+-- change to monads
 import Control.Concurrent (
   MVar,
   readMVar,
