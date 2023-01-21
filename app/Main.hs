@@ -15,7 +15,7 @@ import EventQueue (
 import GameState (GameState (movement), move, opositeMovement)
 import EventQueue(setSpeed)
 import Initialization (gameInitialization)
-import RenderState (BoardInfo, RenderState (gameOver), render, updateRenderState, getScore, updateMessages, score)
+import RenderState (BoardInfo, RenderState (gameOver), render, updateRenderState, updateMessages, score)
 import System.Environment (getArgs)
 import System.IO (BufferMode (NoBuffering), hSetBinaryMode, hSetBuffering, hSetEcho, stdin, stdout)
 import Control.Monad (unless)
