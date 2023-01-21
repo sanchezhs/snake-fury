@@ -46,7 +46,7 @@ opositeMovement West  = East
 -- | Purely creates a random point within the board limits
 --   You should take a look to System.Random documentation. 
 --   Also, in the import list you have all relevant functions.
-makeRandomPoint :: BoardInfo -> StdGen -> (Point, StdGen)
+makeRandomPoint :: BoardInfo -> GameState -> (Point, GameState)
 makeRandomPoint (BoardInfo maxX maxY) r = (p, r)
   where
     (r1, r2)  = split r
@@ -162,9 +162,6 @@ lost :: BoardInfo -> GameState -> Bool
 lost bi g@(GameState s _ _ _) = inSnake (nextHead bi g) s
 
 
-toList :: SnakeSeq -> [(Point, Board.CellType)]
-toList (SnakeSeq h b) = S.foldrWithIndex (\ i x y -> [(x, Board.Snake)] ++ y) [] b
-
 move :: BoardInfo -> GameState -> ([Board.RenderMessage] , GameState)
 move bi g@(GameState s@SnakeSeq{snakeHead = head, snakeBody = body} a m r)
   | eats       = ([Board.RenderBoard snakeList', Board.UpdateScore 1], GameState newSnake (fst a') m (snd a'))
@@ -178,28 +175,6 @@ move bi g@(GameState s@SnakeSeq{snakeHead = head, snakeBody = body} a m r)
     snakeList        = [(head', Board.SnakeHead), (head, Board.Snake), (tail, Board.Empty)]
     snakeList'       = [(a, Board.SnakeHead), (head, Board.Snake), (fst a', Board.Apple)] 
 
-{-
---(S.drop 1 $ body S.|> newHead)
-inSnake a s -->
-  1. Calcular nueva posicion cabeza -> nextHead i g
-  2. Calcular nueva posicion del cuerpo
-  3. Añadir '0' al final de snakeBody -> snakeBody |> '0'
-  4. Actualizar puntuacion
-  5. Calcular nueva manzana
-  6. Crear nuevo delta con 1-5
-otro caso -->
-  1. Calcular nueva posicion cabeza -> nextHead i g
-  2. Calcular nueva posicion del cuerpo
-  5. Crear nuevo delta con 1-2
-
-  { snakeSeq :: SnakeSeq
-  , applePosition :: Point
-  , movement :: Movement
-  , randomGen :: StdGen
-  }
-move (BoardInfo 10 10) (GameState (snakeHead (2,3) body (fromList[2,2])) (4,4) East North r)
-
--}
 
 {- This is a test for move. It should return
 
