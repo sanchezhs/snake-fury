@@ -1,0 +1,5 @@
+.stack-work/
+*~
+profile/
+dist-newstyle
+mergeCascade.sh

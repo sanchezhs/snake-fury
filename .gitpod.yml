@@ -1,0 +1,12 @@
+image:
+  file: .gitpod.Dockerfile
+tasks:
+  - name: Build complete version of snake-fury
+    before: git checkout complete-solution
+    init: stack build
+    command: |
+      export PATH=${PATH}:${HOME}/.local/bin
+      stack install
+vscode:
+  extensions:
+    - haskell.haskell
