@@ -4,4 +4,4 @@ Snake game written in Haskell. The idea is to learn Haskell with an actual chall
 recursion examples that you can find everywhere (fibonacci numbers...)
 
 ## Original repository
-[](https://github.com/lsmor/snake-fury)
+[Ismor Snake Fury](https://github.com/lsmor/snake-fury)
