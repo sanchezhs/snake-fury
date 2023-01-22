@@ -43,7 +43,7 @@ gameloop binf gstate rstate queue = do
       isGameOver = gameOver rstate'
   putStr "\ESC[2J" --This cleans the console screen
   B.hPutBuilder stdout $ render binf rstate'
-  --B.hPutBuilder stdout $ B.string7 $ show gstate
+  B.hPutBuilder stdout $ B.string7 $ show gstate
   unless isGameOver $ gameloop binf gstate' rstate' queue
 
 -- | main.

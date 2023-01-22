@@ -47,7 +47,7 @@ opositeMovement West  = East
 --   You should take a look to System.Random documentation. 
 --   Also, in the import list you have all relevant functions.
 makeRandomPoint :: BoardInfo -> GameState -> (Point, GameState)
-makeRandomPoint (BoardInfo maxX maxY) r = (p, r)
+makeRandomPoint (BoardInfo maxX maxY) (GameState s a m r) = (p, GameState s a m r)
   where
     (r1, r2)  = split r
     p  = (fst (uniformR (1, maxX) r1), fst (uniformR (1, maxY) r2))
@@ -108,12 +108,12 @@ True
 
 
 -- | Calculates a new random apple, avoiding creating the apple in the same place, or in the snake body
-newApple :: BoardInfo -> GameState -> (Point, StdGen)
-newApple b (GameState s a m r)
-  | p == a || inSnake p s = makeRandomPoint b (fst $ split r)
-  | otherwise = (p, r')
+newApple :: BoardInfo -> GameState -> (Point, GameState)
+newApple b g@(GameState s a m r)
+  | p == a || inSnake p s = makeRandomPoint b (GameState s p m (fst $ split r)) 
+  | otherwise = (p, g')
   where
-    (p, r') = makeRandomPoint b r
+    (p, g') = makeRandomPoint b g
 
 
 
@@ -143,37 +143,36 @@ newApple b (GameState s a m r)
 --        - - - X          - - - X
 -}
 
-
--- Returns (new snake, tail point)
-nextBody :: SnakeSeq -> Point -> Bool -> (SnakeSeq, Point)
-nextBody (SnakeSeq head body) newHead eats
-  | eats      = if S.length body >= 1 then (SnakeSeq newHead snake', S.index snake' last) else (SnakeSeq newHead (S.singleton head), head)
-  | otherwise = if S.null body then (SnakeSeq newHead S.empty, head) else (SnakeSeq newHead (S.deleteAt last $ snake'), S.index snake' last)
+extendSnake :: Point -> BoardInfo -> GameState -> (RenderState.DeltaBoard, GameState)
+extendSnake newHead bi (GameState (SnakeSeq head body) a m r) = (delta, gState)
   where
-    snake' = head S.<| body
-    last   = S.length snake' - 1
-    len    = S.length body
+    delta  = [(newHead, Board.SnakeHead), (head, Board.Snake)]
+    gState = GameState (SnakeSeq newHead (head S.<| body)) a m r
 
 
-eatsApple :: BoardInfo -> GameState -> Bool 
-eatsApple bi g@(GameState (SnakeSeq _ b) a _ _) = inSnake a $ SnakeSeq (nextHead bi g) b
-
-lost :: BoardInfo -> GameState -> Bool
-lost bi g@(GameState s _ _ _) = inSnake (nextHead bi g) s
-
+displaceSnake :: Point -> BoardInfo -> GameState -> (RenderState.DeltaBoard, GameState)
+displaceSnake newHead bi (GameState (SnakeSeq head body) a m r)
+  | S.null body        = ([(newHead, Board.SnakeHead), (head, Board.Empty)], GameState (SnakeSeq newHead body) a m r)
+  | S.length body == 1 = ([(newHead, Board.SnakeHead), (head, Board.Snake), (S.index body 0, Board.Empty)], GameState (SnakeSeq newHead (S.singleton head)) a m r)
+  | otherwise          = ([(newHead, Board.SnakeHead), (head, Board.Snake), (tail, Board.Empty)], GameState (SnakeSeq newHead body') a m r)
+  where
+    body' = S.deleteAt (S.length body) $ head S.<| body
+    tail  = S.index body $ S.length body - 1
+  
 
 move :: BoardInfo -> GameState -> ([Board.RenderMessage] , GameState)
 move bi g@(GameState s@SnakeSeq{snakeHead = head, snakeBody = body} a m r)
-  | eats       = ([Board.RenderBoard snakeList', Board.UpdateScore 1], GameState newSnake (fst a') m (snd a'))
-  | gOver      = ([Board.GameOver], g)
-  | otherwise  = ([Board.RenderBoard snakeList], GameState newSnake a m r)
+  | newHead == a = ([Board.RenderBoard (delta' ++ [(apple, Board.Apple)]), Board.UpdateScore 1], g' {snakeSeq=s', applePosition=apple})
+  | otherwise    = ([Board.RenderBoard delta''], g'')
   where
-    eats             = eatsApple bi g
-    gOver            = lost bi g
-    (head', a')      = (nextHead bi g, newApple bi g)
-    (newSnake, tail) = nextBody s head' eats
-    snakeList        = [(head', Board.SnakeHead), (head, Board.Snake), (tail, Board.Empty)]
-    snakeList'       = [(a, Board.SnakeHead), (head, Board.Snake), (fst a', Board.Apple)] 
+    newHead = nextHead bi g
+    (apple, gA) = newApple bi g
+    (delta', g'@(GameState s' a' m' r')) = extendSnake newHead bi g
+    (delta'', g''@(GameState s'' a'' m'' r'')) = displaceSnake newHead bi g
+
+
+
+
 
 
 {- This is a test for move. It should return
