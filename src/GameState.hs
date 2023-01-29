@@ -10,6 +10,7 @@ import Data.Sequence ( Seq(..), empty)
 import qualified Data.Sequence as S
 import System.Random ( uniformR, RandomGen(split), StdGen, Random (randomR))
 import Data.Maybe (isJust)
+import Control.Monad.Trans.State.Strict (State, get, put, modify, gets, runState)
 
 -- The movement is one of this.
 data Movement = North | South | East | West deriving (Show, Eq)
@@ -29,6 +30,8 @@ data GameState = GameState
   , randomGen :: StdGen
   }
   deriving (Show, Eq)
+
+type GameStep a = State GameState a
 
 -- | This function should calculate the opposite movement.
 opositeMovement :: Movement -> Movement
@@ -51,6 +54,22 @@ makeRandomPoint (BoardInfo maxX maxY) (GameState s a m r) = (p, GameState s a m 
   where
     (r1, r2)  = split r
     p  = (fst (uniformR (1, maxX) r1), fst (uniformR (1, maxY) r2))
+
+makeRandomPoint' :: BoardInfo -> GameStep Point 
+makeRandomPoint' (BoardInfo h w) = do 
+  r <- gets randomGen                        -- get state
+  let (r1, r2) = split r
+      rnd      =  (uniformR (1, h) r1)
+  modify $ \ x -> x{randomGen = snd rnd}     -- modify state
+  pure (fst rnd, fst (uniformR (1, w) r2))   -- put point inside monad
+  
+
+newApple' :: BoardInfo -> GameState Point
+newApple' b@(BoardInfo h w) = do
+  a <- gets applePosition
+  let a' = makeRandomPoint' b 
+        
+
 
 {-
 We can't test makeRandomPoint, because different implementation may lead to different valid result.
